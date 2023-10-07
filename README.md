@@ -12,6 +12,6 @@ The code folder has three R files, `DGP.R`, `Main. R` and `Util_Functions.R`.
 
    The `DGP.R` file generates the above four-parameter autoregressive spatial model on a regular two-dimensional grid $\mathcal S$ of spatial dimension $S$ and time dimension $T$. It returns a data matrix of size $T \times S$ that stores the spatio-temporal process and a distance matrix of $S\times S$ that stores the distance between the $S$ spatial locations.
 
-2. The `Main.R` file
+2. The `Main.R` file contains the R code to implement the CLMDL algorithm based on the four-parameter autoregressive spatial model. In particular, it requires the input of (a) a data matrix of size $T \times S$ that stores the spatio-temporal process and (b) a distance matrix of $S\times S$ that stores the distance between the $S$ spatial locations. It then conducts multiple change-point estimation in the spatio-temporal process and further constructs confidence interval for each detected change-point (if any). The key tuning parameters are `s.lag` and `t.lag`, which specifies which pairs of observations are used in the construction of the composite log-likelihood. The `s.lag` is the spatial distance parameter $d$ in the manuscript and the `t.lag` is the time lag parameter $k$ in the manuscript.
 
 3. The `Util_Functions.R` contains auxiliary functions for the `DGP.R` and `Main.R` files. Among them, there are two key functions. the `pl()` function computes the 
