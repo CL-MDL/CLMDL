@@ -7,7 +7,8 @@ This GitHub repository contains R functions to implement the CLMDL algorithm pro
 
 The *code* folder has three R files, `DGP.R`, `Main. R` and `Util_Functions.R`.
 
-1. The `DGP.R` file contains R code to simulate a spatio-temporal process based on the four-parameter autoregressive spatial model (see (22) in the manuscript), which is the parametric model employed by CLMDL for the numerical studies in the paper. In particular, on each stationary segment, we have $$\bf y_t-\mu = \phi (\bf y_t-\mu) +\epsilon_t,$$ where $\bf y_t\in \mathbb R^S$ is the observation on $S$ spatial locations on time $t$, $\mu$ is the mean parameter, $\phi$ is the temporal dependence parameter, and $\epsilon_t \in \mathbb R^S$ is the mean-zero spatial error process whose covariance function follows the exponential model 
+1. The `DGP.R` file contains R code to simulate a spatio-temporal process based on the four-parameter autoregressive spatial model (see (22) in the manuscript), which is the parametric model employed by CLMDL for the numerical studies in the paper. In particular, on each stationary segment, we have $$\bf y_t-\mu = \phi (\bf y_t-\mu) +\epsilon_t,$$ where $\bf y_t\in \mathbb R^S$ is the observation on $S$ spatial locations on time $t$, $\mu$ is the mean parameter, $\phi$ is the temporal dependence parameter, and $\boldsymbol{\varepsilon}_t=\{ \varepsilon_{t,\bs}: \bs \in \mathcal{S} \}$ is a Gaussian process with exponential covariance function 
+${\rm Cov}(\varepsilon_{t,\textbf{s}}, \varepsilon_{t,\textbf{s}'}) = \sigma^2\exp\{-\left\lVert \textbf{s}-\textbf{s}'\right\lVert_2/\rho\}$ and ${\rm Cov}(\varepsilon_{t,\textbf{s}}, \varepsilon_{t',\textbf{s}'}) =0$, when $t\neq t'$. 
 2. 
 
 ### Step 1
