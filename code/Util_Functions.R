@@ -14,6 +14,9 @@ Matern <- function(d, rho, nu=0.5) {
 # Simulate ONE segment
 sim.y <- function(theta, S.dist, TT, T.burn=100) {
   phi <- theta[1]; rho <- theta[2]; sigma2 <- theta[3]; mu <- theta[4]
+  if(is.na(mu)) { # fixed mean at 0
+    mu <- 0
+  }
   Sigma <- sigma2*Matern(S.dist, rho=rho)
   y <- matrix(0, nrow=TT+T.burn, ncol(S.dist))
   e <- rmvnorm(n=TT+T.burn, sigma=Sigma)
@@ -93,11 +96,15 @@ D.cal <- function(y, S.dist, s.lag=1, t.lag=1) {
 
 
 # Calculate -logPL and D.pair with given distance matrix, lags and remedy matrix
-pl <- function(theta, y, S.dist, t.lag=1, remedy, ts=T) {
-  if(ts){ # two-step estimation for computational efficiency; first mean function, then covariance function
-    phi <- theta[1]; rho <- theta[2]; sigma2 <- theta[3]; mu <- mean(y)
+pl <- function(theta, y, S.dist, t.lag=1, remedy, ts=T, mu_zero=F) {
+  if(mu_zero){ # mu is fixed at zero
+    phi <- theta[1]; rho <- theta[2]; sigma2 <- theta[3]; mu <- 0
   }else{
-    phi <- theta[1]; rho <- theta[2]; sigma2 <- theta[3]; mu <- theta[4]
+    if(ts){ # two-step estimation for computational efficiency; first mean function, then covariance function
+      phi <- theta[1]; rho <- theta[2]; sigma2 <- theta[3]; mu <- mean(y)
+    }else{
+      phi <- theta[1]; rho <- theta[2]; sigma2 <- theta[3]; mu <- theta[4]
+    }
   }
   
   S <- ncol(y); TT <- nrow(y)
@@ -150,19 +157,19 @@ pl <- function(theta, y, S.dist, t.lag=1, remedy, ts=T) {
 
 
 # Cost function for a segment
-cost <- function(y.full, start, end, S.dist, t.lag=1, Ck, min.length, remedy, ini, ts=T) {
+cost <- function(y.full, start, end, S.dist, t.lag=1, Ck, min.length, remedy, ini, ts=T, mu_zero=F) {
   S <- ncol(y.full)
   num_para <- length(ini)
   if (end - start + 1 < min.length) {
     return(Inf)
   } else {
     y.seg <- y.full[start:end,]
-    if(ts){ # whether to use two-stage estimator (mean and covariance) for computational efficiency
+    if(ts | mu_zero){ # whether to use two-stage estimator (mean and covariance) for computational efficiency (or have known mu)
       ini <- ini[1:3]; lb <- c(-0.7,0.1,1e-3); ub <- c(0.7,3,5)
     }else{
       lb <- c(-0.7,0.1,1e-3,-1); ub <- c(0.7,3,5,1)
     }
-    pmle <- optim(ini, pl, y=y.seg, S.dist=S.dist, t.lag=t.lag, remedy=remedy, ts=ts,
+    pmle <- optim(ini, pl, y=y.seg, S.dist=S.dist, t.lag=t.lag, remedy=remedy, ts=ts, mu_zero=mu_zero,
     		          method="L-BFGS-B", lower=lb, upper=ub)
     lik <- pmle$value
     pen <- Ck*(num_para/2*(log(end-start+1) + log(S)) + log(end-start+1))
@@ -172,7 +179,7 @@ cost <- function(y.full, start, end, S.dist, t.lag=1, Ck, min.length, remedy, in
 
 
 # PELT function
-pelt <- function(y.full, S.dist, Ck, remedy, K, t.lag=1, min.length, ini, res=1, ts=T) {
+pelt <- function(y.full, S.dist, Ck, remedy, K, t.lag=1, min.length, ini, res=1, ts=T, mu_zero=F) {
   TT <- nrow(y.full)
   S <- ncol(y.full)
   
@@ -184,7 +191,7 @@ pelt <- function(y.full, S.dist, Ck, remedy, K, t.lag=1, min.length, ini, res=1,
   # For minimum segment length initialization
   for (i in 1:(2*min.length-1)) {
   	f[i+1] <- cost(y.full=y.full, start=1, end=i, S.dist=S.dist, t.lag=t.lag,
-  	               Ck=Ck, min.length=min.length, remedy=remedy, ini=ini, ts=ts)
+  	               Ck=Ck, min.length=min.length, remedy=remedy, ini=ini, ts=ts, mu_zero=mu_zero)
   	cpi <- list(c(0,i))
   	cp <- c(cp, cpi)
   	R.next <- list(c(0, i-min.length+1))
@@ -201,7 +208,7 @@ pelt <- function(y.full, S.dist, Ck, remedy, K, t.lag=1, min.length, ini, res=1,
       for(j in R[[i]]) {
         possible.F[cnt] <- f[j+1] + cost(y.full=y.full, start=j+1, end=i, S.dist=S.dist,
                                          t.lag=t.lag, Ck=Ck, min.length=min.length,
-                                         remedy=remedy, ini=ini, ts=ts)
+                                         remedy=remedy, ini=ini, ts=ts, mu_zero=mu_zero)
         cnt <- cnt+1
       }
       f[i+1] <- min(possible.F)
@@ -222,19 +229,19 @@ pelt <- function(y.full, S.dist, Ck, remedy, K, t.lag=1, min.length, ini, res=1,
 
 
 # Given change point location, calculate CLMDL (cost function)
-total_cost <- function(cp_vec, y.full, S.dist, t.lag=1, Ck, remedy, min.length, ini, ts=T) {
+total_cost <- function(cp_vec, y.full, S.dist, t.lag=1, Ck, remedy, min.length, ini, ts=T, mu_zero=F) {
 	ans <- 0
 	len <- length(cp_vec)
 	for (i in 1:(len-1)) {
 		ans <- ans + cost(y.full, start=cp_vec[i]+1, end=cp_vec[i+1], 
-				              S.dist, t.lag, Ck, min.length, remedy, ini, ts)
+				              S.dist, t.lag, Ck, min.length, remedy, ini, ts, mu_zero)
 	}
 	ans
 }
 
 
 # CI function
-Q.grid <- function(lambda.hat, TT, S.dist, y.full, theta1, theta2, t.lag, remedy, q.bound, ts=T) {
+Q.grid <- function(lambda.hat, TT, S.dist, y.full, theta1, theta2, t.lag, remedy, q.bound, ts=T, mu_zero=F) {
   q.range <- -q.bound:q.bound
   q.range <- q.range[q.range+lambda.hat >=1 & q.range+lambda.hat <= TT]
   cl <- 0*q.range
@@ -243,8 +250,8 @@ Q.grid <- function(lambda.hat, TT, S.dist, y.full, theta1, theta2, t.lag, remedy
   
   for (i in 1:length(cl)) {
     cp_tmp <- lambda.hat + q.range[i]
-    cl[i] <- pl(theta=theta1, y=y.full[q_min:cp_tmp,], S.dist, t.lag, remedy, ts) +
-             pl(theta=theta2, y=y.full[(cp_tmp+1):q_max,], S.dist, t.lag, remedy, ts)
+    cl[i] <- pl(theta=theta1, y=y.full[q_min:cp_tmp,], S.dist, t.lag, remedy, ts, mu_zero) +
+             pl(theta=theta2, y=y.full[(cp_tmp+1):q_max,], S.dist, t.lag, remedy, ts, mu_zero)
   }
   q.range[cl==min(cl)]
 }
