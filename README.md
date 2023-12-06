@@ -1,4 +1,4 @@
-An Implementation Example of CLMDL
+Implementation of CLMDL
 ================
 
 This GitHub repository contains R functions to implement the CLMDL algorithm proposed in the paper arXiv:1904.06340. The CLMDL algorithm is designed for conducting multiple change-point estimation in a spatio-temporal process based on a parametric model (e.g. a linear regression based mean function + a Matern covariance function).
