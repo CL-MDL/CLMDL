@@ -8,6 +8,7 @@ registerDoParallel(24)
 
 
 ### All simulation settings considered in Simulation 2
+rep_times <- 100
 S_sets <- c(6^2, 8^2, 10^2) # Spatial dimension S
 TT_sets <- c(200) # Temporal dimension T
 delta_sets <- rbind(c(2,0), c(3,0), c(2,2))/10 # Change size
@@ -46,7 +47,7 @@ s.len <- s.len[s.len>0] # all unique spatial distance
 
 
 ######### Main function ##########
-final_result <- foreach(rep_index=1:1000, .packages='mvtnorm') %dopar% {
+final_result <- foreach(rep_index=1:rep_times, .combine='rbind', .packages='mvtnorm') %dopar% {
   # Simulate a dataset with one single change-point at 0.5*T
   y <- rbind(sim.y(theta=theta1, S.dist=S.dist, TT=T1, T.burn=100),
              sim.y(theta=theta2, S.dist=S.dist, TT=T2, T.burn=100))
@@ -111,14 +112,16 @@ final_result <- foreach(rep_index=1:1000, .packages='mvtnorm') %dopar% {
   sum_result
 }
 
+save.image("Simulation2.RData")
+
 ### Analysis (i.e. check change-point estimation accuracy and check CI coverage)
 num_cp <- cp <- coverage <- c()
-for(b in 1:1000){
-  tmp90 <- final_result[[b]]$ci90-TT/2
-  tmp95 <- final_result[[b]]$ci95-TT/2
-  tmp99 <- final_result[[b]]$ci99-TT/2
-  num_cp <- c(num_cp, length(final_result[[b]]$est))
-  cp <- rbind(cp, final_result[[b]]$est)
+for(b in 1:rep_times){
+  tmp90 <- final_result[b,]$ci90-TT/2
+  tmp95 <- final_result[b,]$ci95-TT/2
+  tmp99 <- final_result[b,]$ci99-TT/2
+  num_cp <- c(num_cp, length(final_result[b,]$est))
+  cp <- rbind(cp, final_result[b,]$est)
   
   tmp_cover <- c(tmp90[1]<=0 & tmp90[2]>=0, tmp95[1]<=0 & tmp95[2]>=0, tmp99[1]<=0 & tmp99[2]>=0)
   coverage <- rbind(coverage, tmp_cover)

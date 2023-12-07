@@ -7,7 +7,8 @@ registerDoParallel(24)
 ############# Code for simulation 1 in the manuscript
 
 
-### All simulation settings considered in Simulation 1 
+### All simulation settings considered in Simulation 1
+rep_times <- 100
 S_sets <- c(6^2, 8^2, 10^2) # Spatial dimension S
 TT_sets <- c(100, 200) # Temporal dimension T
 delta_sets <- rbind(c(0,0), c(2,0), c(3,0), c(0,6), c(0,10), c(2,2), c(3,3))/10 # Change size
@@ -46,7 +47,7 @@ s.len <- s.len[s.len>0] # all unique spatial distance
 
 
 ######### Main function ##########
-final_result <- foreach(rep_index=1:1000, .packages=c('mvtnorm')) %dopar% {
+final_result <- foreach(rep_index=1:rep_times, .packages=c('mvtnorm')) %dopar% {
   # Simulate a dataset with one single change-point at 0.5*T
   y <- rbind(sim.y(theta=theta1, S.dist=S.dist, TT=T1, T.burn=100),
              sim.y(theta=theta2, S.dist=S.dist, TT=T2, T.burn=100))
@@ -71,5 +72,8 @@ final_result <- foreach(rep_index=1:1000, .packages=c('mvtnorm')) %dopar% {
   pelt_result
 }
 
-# Analysis (i.e. check the proportion of experiments where correct number of cp is detected)
-sum(sapply(final_result, length)==3)/1000
+save.image("Simulation1.RData")
+
+### Analysis (i.e. check the proportion of experiments where correct number of cp is detected)
+sum(sapply(final_result, length)==3)/rep_times
+
