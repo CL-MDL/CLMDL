@@ -59,4 +59,4 @@ The output folder has three RDS files, `y0.RDS`, `y1.RDS` and `y2.RDS`, which ar
 
 #### For the code_manuscript folder
 1. Download all five R files, `Simulation1.R`, `Simulation2.R`, `RealData.R`, `Util_Functions.R` and `Util_RealData.R`, and one RData file `station_month_76.RData` in the code_manuscript folder and put them into one single folder.
-2. Run `Simulation1.R`, which will generate `Simulation1.RData`. This code (with 100 repetitions) takes around hours on a 24-core cluster. Run `Simulation2.R`, which will generate `Simulation2.RData`. This code (with 100 repetitions) takes around hours on a 24-core cluster. Run `RealData.R`, which will generate `RealData.RData`. This code takes around 6 hours on a 100-core cluster. 
+2. Run `Simulation1.R`, which will generate `Simulation1.RData`. This code (with 100 repetitions) takes around 80 mins on a 24-core cluster. Run `Simulation2.R`, which will generate `Simulation2.RData`. This code (with 100 repetitions) takes around 5 hours on a 24-core cluster. Run `RealData.R`, which will generate `RealData.RData`. This code takes around 6 hours on a 100-core cluster. 
